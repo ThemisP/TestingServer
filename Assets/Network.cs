@@ -16,6 +16,7 @@ public class Network : MonoBehaviour {
     public NetworkStream myStream;
     public StreamReader myReader;
     public StreamWriter myWriter;
+    
 
     private byte[] asyncBuff;
     public bool shouldHandleData;
@@ -26,6 +27,7 @@ public class Network : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
+        
         ConnectToGameServer();
 	}
 	
@@ -49,6 +51,25 @@ public class Network : MonoBehaviour {
         PlayerSocket.BeginConnect(IP, Port, new AsyncCallback(ConnectCallback), PlayerSocket);
         isConnected = true;
     }
+
+    public void Login(string username) {
+        if(PlayerSocket == null || !PlayerSocket.Connected) {
+            PlayerSocket.Close();
+            PlayerSocket = null;
+            Debug.Log("Disconnected");
+            return;
+        }
+        ByteBuffer.ByteBuffer buffer = new ByteBuffer.ByteBuffer();
+        buffer.WriteInt(1);
+        buffer.WriteString(username);
+        myStream.BeginWrite(buffer.BuffToArray(), 0, buffer.Length(), new AsyncCallback(LoginResponse), myStream);
+    }
+
+    void LoginResponse(IAsyncResult result) {
+
+        Debug.Log("response on login: " + result.IsCompleted);
+    }
+
 
     void ConnectCallback(IAsyncResult result) {
         if(PlayerSocket != null) {
