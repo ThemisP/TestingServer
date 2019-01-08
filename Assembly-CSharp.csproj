@@ -64,6 +64,7 @@
     <Compile Include="Assets\Libraries\ByteBuffer.cs" />
     <Compile Include="Assets\MainMenu.cs" />
     <Compile Include="Assets\Network.cs" />
+    <Compile Include="Assets\PlayerInfo.cs" />
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>D:/unityProject/TestingServer/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>

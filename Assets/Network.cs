@@ -16,13 +16,15 @@ public class Network : MonoBehaviour {
     public NetworkStream myStream;
     public StreamReader myReader;
     public StreamWriter myWriter;
-    
 
+    public PlayerInfo player;
+ 
     private byte[] asyncBuff;
     public bool shouldHandleData;
 
     public void Awake() {
         instance = this;
+        player = new PlayerInfo();
     }
 
     // Use this for initialization
@@ -62,13 +64,68 @@ public class Network : MonoBehaviour {
         ByteBuffer.ByteBuffer buffer = new ByteBuffer.ByteBuffer();
         buffer.WriteInt(1);
         buffer.WriteString(username);
-        myStream.BeginWrite(buffer.BuffToArray(), 0, buffer.Length(), new AsyncCallback(LoginResponse), myStream);
+        player.ChangeUsername(username);
+        myStream.Write(buffer.BuffToArray(), 0, buffer.Length());
     }
 
-    void LoginResponse(IAsyncResult result) {
-
-        Debug.Log("response on login: " + result.IsCompleted);
+    public void CreateGame(int MaxPlayers) {
+        if (PlayerSocket == null || !PlayerSocket.Connected) {
+            PlayerSocket.Close();
+            PlayerSocket = null;
+            Debug.Log("Disconnected");
+            return;
+        }
+        ByteBuffer.ByteBuffer buffer = new ByteBuffer.ByteBuffer();
+        buffer.WriteInt(2);
+        buffer.WriteInt(MaxPlayers);
+        myStream.Write(buffer.BuffToArray(), 0, buffer.Length());
+        byte[] bufferBytes = new byte[8];
+        myStream.Read(bufferBytes, 0, 8);
+        buffer.Clear();
+        buffer.WriteBytes(bufferBytes);
+        int finished = buffer.ReadInt();
+        int roomIndex = buffer.ReadInt();
+        if(finished==1) {
+            Debug.Log("Succeded with roomIndex: " + roomIndex);
+            Network.instance.player.JoinRoom(roomIndex);
+        } else {
+            Debug.Log("Failed to create a room!");
+        }
+        
     }
+
+    public void GetPlayersInRoom() {
+        if (PlayerSocket == null || !PlayerSocket.Connected) {
+            PlayerSocket.Close();
+            PlayerSocket = null;
+            Debug.Log("Disconnected");
+            return;
+        }
+        if (!player.InRoom()) return;
+        ByteBuffer.ByteBuffer buffer = new ByteBuffer.ByteBuffer();
+        buffer.WriteInt(5);
+        buffer.WriteInt(player.GetRoomIndex());
+        myStream.Write(buffer.BuffToArray(), 0, buffer.Length());
+
+        byte[] bufferBytes = new byte[4];
+        myStream.Read(bufferBytes, 0, 4);
+        buffer.Clear();
+        buffer.WriteBytes(bufferBytes);
+        int lengthofData = buffer.ReadInt();
+
+        bufferBytes = new byte[lengthofData];
+        myStream.Read(bufferBytes, 0, lengthofData);
+        buffer.Clear();
+        buffer.WriteBytes(bufferBytes);
+        int numberOfPlayers = buffer.ReadInt();
+        for(int i=0; i < numberOfPlayers; i++) {
+            string user = buffer.ReadString();
+            Debug.Log("User: " + user);
+        }
+
+
+    }
+
 
 
     void ConnectCallback(IAsyncResult result) {
