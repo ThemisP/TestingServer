@@ -54,6 +54,49 @@ public class Network : MonoBehaviour {
         isConnected = true;
     }
 
+    void ConnectCallback(IAsyncResult result) {
+        if (PlayerSocket != null) {
+            PlayerSocket.EndConnect(result);
+            if (!PlayerSocket.Connected) {
+                isConnected = false;
+                return;
+            } else {
+                PlayerSocket.NoDelay = true;
+                myStream = PlayerSocket.GetStream();
+                myStream.BeginRead(asyncBuff, 0, 8192, OnReceive, null);
+            }
+        }
+    }
+
+
+    #region "Server Communication"
+
+    void OnReceive(IAsyncResult result) {
+        if (PlayerSocket != null) {
+            if (PlayerSocket == null) return;
+
+            int byteArray = myStream.EndRead(result);
+            byte[] myBytes = null;
+            Array.Resize(ref myBytes, byteArray);
+            Buffer.BlockCopy(asyncBuff, 0, myBytes, 0, byteArray);
+
+            if (byteArray == 0) {
+                Debug.Log("You got disconnected");
+                PlayerSocket.Close();
+                return;
+            }
+
+            //Handle Data
+            ByteBuffer.ByteBuffer buffer = new ByteBuffer.ByteBuffer();
+            buffer.WriteBytes(myBytes);
+            string msg = buffer.ReadString();
+            Debug.Log(msg);
+
+            if (PlayerSocket == null) return;
+            myStream.BeginRead(asyncBuff, 0, 8192, OnReceive, null);
+
+        }
+    }
     public void Login(string username) {
         if(PlayerSocket == null || !PlayerSocket.Connected) {
             PlayerSocket.Close();
@@ -106,19 +149,21 @@ public class Network : MonoBehaviour {
         buffer.WriteInt(5);
         buffer.WriteInt(player.GetRoomIndex());
         myStream.Write(buffer.BuffToArray(), 0, buffer.Length());
-
+        Debug.Log("1st part");
         byte[] bufferBytes = new byte[4];
         myStream.Read(bufferBytes, 0, 4);
         buffer.Clear();
         buffer.WriteBytes(bufferBytes);
         int lengthofData = buffer.ReadInt();
-
+        Debug.Log("2nd part");
         bufferBytes = new byte[lengthofData];
         myStream.Read(bufferBytes, 0, lengthofData);
         buffer.Clear();
         buffer.WriteBytes(bufferBytes);
+        Debug.Log("3rd part");
         int numberOfPlayers = buffer.ReadInt();
-        for(int i=0; i < numberOfPlayers; i++) {
+        Debug.Log("read int");
+        for (int i = 0; i < numberOfPlayers; i++) {
             string user = buffer.ReadString();
             Debug.Log("User: " + user);
         }
@@ -126,42 +171,6 @@ public class Network : MonoBehaviour {
 
     }
 
-
-
-    void ConnectCallback(IAsyncResult result) {
-        if(PlayerSocket != null) {
-            PlayerSocket.EndConnect(result);
-            if(!PlayerSocket.Connected) {
-                isConnected = false;
-                return;
-            } else {
-                PlayerSocket.NoDelay = true;
-                myStream = PlayerSocket.GetStream();
-                myStream.BeginRead(asyncBuff, 0, 8192, OnReceive, null);
-            }
-        }
-    }
-
-    void OnReceive(IAsyncResult result) {
-        if(PlayerSocket != null) {
-            if (PlayerSocket == null) return;
-
-            int byteArray = myStream.EndRead(result);
-            byte[] myBytes = null;
-            Array.Resize(ref myBytes, byteArray);
-            Buffer.BlockCopy(asyncBuff, 0, myBytes, 0, byteArray);
-
-            if(byteArray == 0) {
-                Debug.Log("You got disconnected");
-                PlayerSocket.Close();
-                return;
-            }
-
-            //Handle Data
-
-            if (PlayerSocket == null) return;
-            myStream.BeginRead(asyncBuff, 0, 8192, OnReceive, null);
-
-        }
-    }
+    
+    #endregion
 }

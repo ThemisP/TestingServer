@@ -40,7 +40,6 @@ public class MainMenu : MonoBehaviour {
         } else {
             timer += Time.deltaTime;
         }
-        
     }
     private void UpdateLobbyNames() {
 
