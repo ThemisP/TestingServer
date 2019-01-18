@@ -21,7 +21,9 @@ public class MainMenu : MonoBehaviour {
     public Text Player2InLobby;
 
     private MenuState _state;
+    private bool reset = true;
     private float timer = 0;
+    private float timer2 = 0;
     public enum MenuState {
         Login,
         Main,
@@ -34,20 +36,7 @@ public class MainMenu : MonoBehaviour {
 	}
 
     void Update() {
-        if(timer > 4f) {
-            Network.instance.GetPlayersInRoom();
-            timer = 0;
-        } else {
-            timer += Time.deltaTime;
-        }
-    }
-    private void UpdateLobbyNames() {
-
-    }
-
-    private void SetMenuState(MenuState state) {
-        this._state = state;
-        switch (state) {
+        switch (this._state) {
             case MenuState.Login:
                 LoginMenu.SetActive(true);
                 MainScreenMenu.SetActive(false);
@@ -62,8 +51,37 @@ public class MainMenu : MonoBehaviour {
                 LoginMenu.SetActive(false);
                 MainScreenMenu.SetActive(false);
                 LobbyMenu.SetActive(true);
+
+                //update every 2 seconds
+                if (timer > 2f) {
+                    Player1InLobby.text = Network.instance.player.GetUsername();
+                    string p2 = Network.instance.player.GetTeammateUsername();
+                    if (p2 != null)
+                        Player2InLobby.text = p2;
+                    RoomTitle.text = "Room Index: " + Network.instance.player.GetRoomIndex();
+                    timer = 0;
+                } else {
+                    timer += Time.deltaTime;
+                }
+
+                //update every 16 seconds
+                if(timer2 > 16f) {
+                    Network.instance.GetPlayersInRoom();
+                    timer2 = 0;
+                    reset = true;
+                } else {
+                    timer2 += Time.deltaTime;
+                }
+                
                 break;
         }
+    }
+    private void UpdateLobbyNames() {
+
+    }
+
+    private void SetMenuState(MenuState state) {
+        this._state = state;
     }
 
     public void Login() {
@@ -74,9 +92,26 @@ public class MainMenu : MonoBehaviour {
 
     public void CreateGame() {
         Network.instance.CreateGame(2);
+    }
+    public void CreateGameSuccessfull() {
         SetMenuState(MenuState.Lobby);
     }
-    
+
+    public void JoinGame() {
+        if(string.IsNullOrEmpty(roomIndexSelect.text)) {
+            Debug.Log("Enter room index to join");
+            return;
+        }
+        int roomNum;
+        int.TryParse(roomIndexSelect.text, out roomNum);
+        Debug.Log(roomNum);
+        
+        Network.instance.JoinRoom(roomNum);
+    }
+    public void JoinGameSuccessfull() {
+        SetMenuState(MenuState.Lobby);
+    }
+
     public void Quit() {
         SetMenuState(MenuState.Login);
     }

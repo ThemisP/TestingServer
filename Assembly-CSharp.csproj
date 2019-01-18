@@ -61,6 +61,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\ClientHandlePackets.cs" />
     <Compile Include="Assets\Libraries\ByteBuffer.cs" />
     <Compile Include="Assets\MainMenu.cs" />
     <Compile Include="Assets\Network.cs" />

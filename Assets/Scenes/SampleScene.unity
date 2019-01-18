@@ -1487,6 +1487,7 @@ MonoBehaviour:
   IP: 127.0.0.1
   Port: 5500
   isConnected: 0
+  mainMenu: {fileID: 1639595484}
   shouldHandleData: 0
 --- !u!4 &670724036
 Transform:
@@ -1768,7 +1769,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1639595484}
-        m_MethodName: Quit
+        m_MethodName: JoinGame
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

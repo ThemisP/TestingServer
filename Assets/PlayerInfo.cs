@@ -6,10 +6,15 @@ public class PlayerInfo {
     private string username;
     private bool inRoom;
     private int roomIndex;
+    private string teammateUsername;
     
     public PlayerInfo() {
         this.username = "Default";
         inRoom = false;
+    }
+
+    public void SetTeammateUsername(string username) {
+        this.teammateUsername = username;
     }
 
     public void ChangeUsername(string username) {
@@ -35,6 +40,10 @@ public class PlayerInfo {
 
     public string GetUsername() {
         return this.username;
+    }
+
+    public string GetTeammateUsername() {
+        return this.teammateUsername;
     }
 	
 }

@@ -18,6 +18,8 @@ public class Network : MonoBehaviour {
     public StreamWriter myWriter;
 
     public PlayerInfo player;
+
+    public MainMenu mainMenu;
  
     private byte[] asyncBuff;
     public bool shouldHandleData;
@@ -29,7 +31,7 @@ public class Network : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        
+        ClientHandlePackets.instance.InitMessages();
         ConnectToGameServer();
 	}
 	
@@ -87,10 +89,8 @@ public class Network : MonoBehaviour {
             }
 
             //Handle Data
-            ByteBuffer.ByteBuffer buffer = new ByteBuffer.ByteBuffer();
-            buffer.WriteBytes(myBytes);
-            string msg = buffer.ReadString();
-            Debug.Log(msg);
+            ClientHandlePackets.instance.HandleData(myBytes);
+            
 
             if (PlayerSocket == null) return;
             myStream.BeginRead(asyncBuff, 0, 8192, OnReceive, null);
@@ -121,20 +121,7 @@ public class Network : MonoBehaviour {
         ByteBuffer.ByteBuffer buffer = new ByteBuffer.ByteBuffer();
         buffer.WriteInt(2);
         buffer.WriteInt(MaxPlayers);
-        myStream.Write(buffer.BuffToArray(), 0, buffer.Length());
-        byte[] bufferBytes = new byte[8];
-        myStream.Read(bufferBytes, 0, 8);
-        buffer.Clear();
-        buffer.WriteBytes(bufferBytes);
-        int finished = buffer.ReadInt();
-        int roomIndex = buffer.ReadInt();
-        if(finished==1) {
-            Debug.Log("Succeded with roomIndex: " + roomIndex);
-            Network.instance.player.JoinRoom(roomIndex);
-        } else {
-            Debug.Log("Failed to create a room!");
-        }
-        
+        myStream.Write(buffer.BuffToArray(), 0, buffer.Length());    
     }
 
     public void GetPlayersInRoom() {
@@ -149,28 +136,20 @@ public class Network : MonoBehaviour {
         buffer.WriteInt(5);
         buffer.WriteInt(player.GetRoomIndex());
         myStream.Write(buffer.BuffToArray(), 0, buffer.Length());
-        Debug.Log("1st part");
-        byte[] bufferBytes = new byte[4];
-        myStream.Read(bufferBytes, 0, 4);
-        buffer.Clear();
-        buffer.WriteBytes(bufferBytes);
-        int lengthofData = buffer.ReadInt();
-        Debug.Log("2nd part");
-        bufferBytes = new byte[lengthofData];
-        myStream.Read(bufferBytes, 0, lengthofData);
-        buffer.Clear();
-        buffer.WriteBytes(bufferBytes);
-        Debug.Log("3rd part");
-        int numberOfPlayers = buffer.ReadInt();
-        Debug.Log("read int");
-        for (int i = 0; i < numberOfPlayers; i++) {
-            string user = buffer.ReadString();
-            Debug.Log("User: " + user);
-        }
-
-
     }
 
+    public void JoinRoom(int roomIndex) {
+        if (PlayerSocket == null || !PlayerSocket.Connected) {
+            PlayerSocket.Close();
+            PlayerSocket = null;
+            Debug.Log("Disconnected");
+            return;
+        }
+        ByteBuffer.ByteBuffer buffer = new ByteBuffer.ByteBuffer();
+        buffer.WriteInt(6);
+        buffer.WriteInt(roomIndex);
+        myStream.Write(buffer.BuffToArray(), 0, buffer.Length());
+    }
     
     #endregion
 }
