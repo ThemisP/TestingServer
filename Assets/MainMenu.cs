@@ -53,7 +53,7 @@ public class MainMenu : MonoBehaviour {
                 LobbyMenu.SetActive(true);
 
                 //update every 2 seconds
-                if (timer > 2f) {
+                if (timer > 1f) {
                     Player1InLobby.text = Network.instance.player.GetUsername();
                     string p2 = Network.instance.player.GetTeammateUsername();
                     if (p2 != null)
